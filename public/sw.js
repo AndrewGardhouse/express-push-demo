@@ -1,8 +1,6 @@
 // Here we are adding a 'push' event listener to our service worker
 // This will display a notification with the predefined title, body, icon and tag.
 self.addEventListener('push', function(event) {
-  console.log('Recieved a push message', event);
-
   var title = 'Invoke Media',
        body = event.data ? event.data.text() : 'no payload',
        icon = 'images/icon.jpeg';

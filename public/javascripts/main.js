@@ -11,6 +11,48 @@ function getSubscriptionId(subscription) {
   return subscription.endpoint.split('/').pop();
 }
 
+function sendSubscriptionToServer(subscription) {
+  var rawKey = subscription.getKey ? subscription.getKey('p256dh') : '';
+  var rawAuthSecret = subscription.getKey ? subscription.getKey('auth') : '';
+  var payload = $(this).find('#payload').val();
+
+  key = rawKey ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey))) : '';
+  authSecret = rawAuthSecret ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawAuthSecret))) : '';
+
+  var data = {
+    endpoint: subscription.endpoint,
+    payload: payload,
+    key: key,
+    authSecret: authSecret
+  }
+
+  $.ajax({
+    url: "/new",
+    type: "POST",
+    data: data
+  }).then(function (data) {
+    console.log("Success:", data);
+  }).fail(function(error) {
+    console.log("Error", error);
+  })
+}
+
+function removeSubscription(subscription) {
+  var data = {
+    endpoint: subscription.endpoint
+  }
+
+  $.ajax({
+    url: "/remove",
+    type: "DELETE",
+    data: data
+  }).then(function (data) {
+    console.log("Success:", data);
+  }).fail(function(error) {
+    console.log("Error", error);
+  })
+}
+
 function initializeState() {
   // Checks if notifications are supported in the service worker
   if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
@@ -65,9 +107,6 @@ function initializeState() {
           console.log('The user has not subscribed to push messages')
           return;
         }
-
-        // Keeps the server in sync with the latest subscriptionId
-        // sendSubscriptionToServer(subscription);
 
         showCurlCommand(subscription)
 
@@ -141,33 +180,44 @@ function subscribe() {
         // TODO: Send the subscription.endpoint to your server and save it to send a push message at a later date
         // return sendSubscriptionToServer(subscription);
 
+        // Keeps the server in sync with the latest subscriptionId
+        sendSubscriptionToServer(subscription);
+
         showCurlCommand(subscription)
 
         var notificationDiv = $('#pushNotifications')
         notificationDiv.removeClass('not-subcribed')
 
-        var ajaxButton = $('#sendPushAjax');
+        $('.payloadForm').on('submit', function(e) {
+          var rawKey = subscription.getKey ? subscription.getKey('p256dh') : '';
+          var rawAuthSecret = subscription.getKey ? subscription.getKey('auth') : '';
+          var payload = $(this).find('#payload').val();
 
-        ajaxButton.on('click', function() {
-          var subscriptionId = getSubscriptionId(subscription);
+          key = rawKey ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey))) : '';
+          authSecret = rawAuthSecret ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawAuthSecret))) : '';
 
           var data = {
-            "to": subscriptionId
+            endpoint: subscription.endpoint,
+            payload: payload,
+            key: key,
+            authSecret: authSecret
           }
 
           $.ajax({
-            url: "https://android.googleapis.com/gcm/send",
+            url: "/push",
             type: "POST",
             headers: {
-              'Authorization' : 'key=' + gcmAPIKey,
               'Content-type': 'application/json'
             },
             data: JSON.stringify(data)
           }).then(function (data) {
             console.log("Success:", data);
           }).fail(function(error) {
-            console.log("Error", error)
+            console.log("Error", error);
           })
+
+          this.reset();
+          e.preventDefault();
         });
 
       })
@@ -213,6 +263,7 @@ function unsubscribe() {
        // TODO: Make a request to your server to remove
        // the subscriptionId from your data store so you
        // don't attempt to send them push messages anymore
+       removeSubscription(pushSubscription)
 
        pushSubscription.unsubscribe()
        .then(function(success) {
