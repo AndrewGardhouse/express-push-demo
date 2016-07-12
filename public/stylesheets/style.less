@@ -1,0 +1,45 @@
+body{
+  text-align: center;
+  background: #f4f4f7;
+  color: #444;
+}
+
+h1{
+  font-size: 65px;
+  line-height: 1.2em;
+  border-bottom: #CCC solid 1px;
+  padding: 20px 0;
+}
+
+h3{
+  font-weight: 300;
+}
+
+label.mdl-switch {
+  width: 15%;
+}
+
+.push-enabling {
+  margin: auto;
+  display: inline-block;
+}
+
+div#pushNotifications {
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 1s, opacity 1s linear;
+  &.not-subcribed {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  #curlCommand {
+    background-color: gainsboro;
+    width: 65%;
+    text-align: initial;
+    word-break: break-all;
+    display: block;
+    margin: 15px auto;
+    padding: 20px;
+  }
+}
